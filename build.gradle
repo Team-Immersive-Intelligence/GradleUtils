@@ -1,0 +1,130 @@
+plugins {
+    // Apply the Java Gradle plugin development plugin to add support for developing Gradle plugins
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id 'java'
+}
+
+def customGradle = rootProject.file('custom.gradle')
+if (customGradle.exists()) {
+    apply from: customGradle
+}
+
+group = "xyz.vdeltagabriel"
+version = "2.0.0"
+
+base {
+    archivesName.set("GradleUtils")
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    // You can declare any Maven/Ivy/file repository here.
+    mavenCentral()
+}
+
+gradlePlugin {
+    website = 'https://github.com/Team-Immersive-Intelligence/GradleUtils'
+    vcsUrl = 'https://github.com/Team-Immersive-Intelligence/GradleUtils.git'
+    plugins {
+        gradleutils {
+            id = 'xyz.vdeltagabriel.GradleUtils'
+            implementationClass = 'xyz.vdeltagabriel.GradleUtils.GradleUtilsPlugin'
+            displayName = 'Gradle Utils'
+            description = 'Various utilities for Gradle projects'
+            tags.set(['utility', 'java', 'gradle'])
+        }
+    }
+}
+
+jar {
+    manifest {
+        attributes([
+                'Specification-Title':   'GradleUtils',
+                'Specification-Vendor':  'GabrielV',
+                'Specification-Version':  project.version,
+                'Implementation-Title':  'GradleJarSigner',
+                'Implementation-Vendor': 'GabrielV',
+                'Implementation-Version': project.version
+        ] as LinkedHashMap, 'xyz/vdeltagabriel/GradleUtils/')
+    }
+}
+
+publishing {
+    publications.register('pluginMaven', MavenPublication) {
+        artifactId = base.archivesName.get()
+        pom {
+            packaging = 'jar'
+            description.set('Various utilities for Gradle projects')
+            url.set('https://github.com/Team-Immersive-Intelligence/GradleUtils')
+
+            scm {
+                url.set('https://github.com/Team-Immersive-Intelligence/GradleUtils')
+                connection.set('scm:git:git://github.com/Team-Immersive-Intelligence/GradleUtils.git')
+                developerConnection.set('scm:git:git://github.com/Team-Immersive-Intelligence/GradleUtils.git')
+            }
+
+            issueManagement {
+                system.set('github')
+                url.set('https://github.com/Team-Immersive-Intelligence/GradleUtils/issues')
+            }
+
+            developers {
+                developer {
+                    id.set('gabriel')
+                    name.set('Gabriel Void')
+                    email.set('gabriel@iiteam.net')
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name "iiMavenReleases"
+            credentials {
+                username project.iiMavenReleasesUsername
+                password project.iiMavenReleasesPassword
+            }
+            authentication {
+                basic(BasicAuthentication)
+            }
+            url "https://maven.iiteam.net/releases"
+        }
+    }
+}
+
+tasks.register('createClasspathManifest') {
+    def outputDir = file("$buildDir/$name")
+
+    inputs.files sourceSets.main.runtimeClasspath
+    outputs.dir outputDir
+
+    doLast {
+        outputDir.mkdirs()
+        file("$outputDir/plugin-classpath.txt").text = sourceSets.main.runtimeClasspath.join("\n")
+    }
+}
+
+test {
+    // Always run the tests
+    outputs.upToDateWhen { false }
+
+    // Turn on some console logging
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        stackTraceFilters "entryPoint"
+    }
+}
+
+dependencies {
+    implementation gradleApi()
+    testRuntimeOnly files(createClasspathManifest)
+}

@@ -1,0 +1,30 @@
+# eclipse
+bin
+*.launch
+.settings
+*.metadata
+*.classpath
+*.settings/
+.project
+eclipse
+
+# idea
+out
+*.ipr
+*.iws
+*.iml
+.idea
+
+# vs code
+.vscode/
+
+# gradle
+*.class
+build
+bin/
+.gradle
+custom.gradle
+
+# System
+*Thumbs.db
+*.ini
